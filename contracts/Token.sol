@@ -44,6 +44,10 @@ contract Token is IToken, ERC20Pausable, Ownable {
         emit WalletWhitelisted(_account, isWhitelistedWallet[_account]);
     }
 
+    function togglePause() external onlyOwner() {
+        paused() ? _unpause() : _pause();
+    }
+
     function transfer(address _to, uint256 _amount) public override returns (bool) {
         requireNotFrozen(msg.sender);
         _amount = _burnTransferFees(msg.sender, _amount);
