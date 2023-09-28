@@ -10,9 +10,11 @@ interface IToken {
     function isWhitelistedWallet(address _account) external view returns (bool);
     function burnFeesRatio() external view returns (uint256);
     function minBurnFeeLimit() external view returns (uint256);
+    function batchTransfer(address[] calldata _accounts, uint256[] memory _amounts) external;
 
     function mint(address _account, uint256 _amount) external;
     function burn(address _account, uint256 _amount) external;
-    function toggleWalletFreeze(address _account) external;
-    function toggleWalletWhitelist(address _account) external;
+    function whitelistWallet(address _account, bool isWhitelist) external;
+    function freezeWallet(address _account, bool isFreeze) external;
+    function togglePause() external;
 }

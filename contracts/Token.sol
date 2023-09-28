@@ -25,6 +25,20 @@ contract Token is IToken, ERC20Pausable, Ownable {
         _transferOwnership(_owner);
     }
 
+    function freezeWallet(address _account, bool isFreeze) external onlyOwner() {
+        isFrozenWallet[_account] = isFreeze;
+        emit WalletFroze(_account, isFreeze);
+    }
+
+    function whitelistWallet(address _account, bool isWhitelist) external onlyOwner() {
+        isWhitelistedWallet[_account] = isWhitelist;
+        emit WalletWhitelisted(_account, isWhitelist);
+    }
+
+    function togglePause() external onlyOwner() {
+        paused() ? _unpause() : _pause();
+    }
+
     function mint(address _account, uint256 _amount) external onlyOwner() {
         require(totalSupply() + _amount <= MAX_SUPPLY, "Token: exploit max supply");
         _mint(_account, _amount);
@@ -34,44 +48,39 @@ contract Token is IToken, ERC20Pausable, Ownable {
         _burn(_account, _amount);
     }
 
-    function toggleWalletFreeze(address _account) external onlyOwner() {
-        isFrozenWallet[_account] = !isFrozenWallet[_account];
-        emit WalletFroze(_account, isFrozenWallet[_account]);
-    }
-
-    function toggleWalletWhitelist(address _account) external onlyOwner() {
-        isWhitelistedWallet[_account] = !isWhitelistedWallet[_account];
-        emit WalletWhitelisted(_account, isWhitelistedWallet[_account]);
-    }
-
-    function togglePause() external onlyOwner() {
-        paused() ? _unpause() : _pause();
-    }
-
     function transfer(address _to, uint256 _amount) public override returns (bool) {
-        requireNotFrozen(msg.sender);
+        _requireNotFrozen(msg.sender);
         _amount = _burnTransferFees(msg.sender, _amount);
         return super.transfer(_to, _amount);
     }
 
     function transferFrom(address _from, address _to, uint256 _amount) public override returns (bool) {
-        requireNotFrozen(_from);
+        _requireNotFrozen(_from);
         _amount = _burnTransferFees(_from, _amount);
         return super.transferFrom(_from, _to, _amount);
     }
 
-    function _burnTransferFees(address _account, uint256 _amount) internal returns(uint256 remaningAmount) {
-        if (isWhitelistedWallet[_account]) return 0;
+    function batchTransfer(address[] calldata _accounts, uint256[] memory _amounts) external {
+        _requireNotFrozen(msg.sender);
+        uint256 totalAccounts = _accounts.length;
+        require(totalAccounts == _amounts.length, "Token: invalid array length");
+        for (uint256 index; index < totalAccounts; ++index) {
+            super.transfer(_accounts[index], _burnTransferFees(msg.sender, _amounts[index]));
+        }
+    }
 
-        uint256 burnFeeAmount;
+    function _burnTransferFees(address _account, uint256 _amount) internal returns(uint256 remaningAmount) {
+        if (isWhitelistedWallet[_account]) return _amount;
+
+        remaningAmount = _amount;
         if (totalSupply() > minBurnFeeLimit) {
-            burnFeeAmount = (_amount * burnFeesRatio) / BURN_FEE_PRECISION;
+            uint256 burnFeeAmount = (_amount * burnFeesRatio) / BURN_FEE_PRECISION;
             remaningAmount = _amount - burnFeeAmount;
             _burn(_account, burnFeeAmount);
         }
     }
 
-    function requireNotFrozen(address _account) internal view {
+    function _requireNotFrozen(address _account) internal view {
         require(!isFrozenWallet[_account], "Token: frozen wallet");
     }
 }
