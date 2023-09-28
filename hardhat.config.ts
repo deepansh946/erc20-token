@@ -41,7 +41,7 @@ const config: HardhatUserConfig = {
       gasMultiplier: 1
     },
     bscTestnet: {
-      url: "http://data-seed-prebsc-2-s2.binance.org:8545/",
+      url: "https://data-seed-prebsc-2-s2.binance.org:8545/",
       accounts: [`0x${process.env.PRIVATE_KEY}`],
       gas: 8000000,
       gasPrice: 1,

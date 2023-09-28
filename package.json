@@ -12,6 +12,6 @@
     "clean": "hardhat clean",
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "deploy": "hardhat run --network mumbai scripts/deploy.ts"
+    "deploy": "hardhat run --network bscTestnet scripts/deploy.ts"
   }
 }
